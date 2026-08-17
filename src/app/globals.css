@@ -1,0 +1,943 @@
+:root {
+  color-scheme: light;
+  --ink: #17201f;
+  --muted: #64736f;
+  --paper: #fbfaf7;
+  --line: #dce3df;
+  --aqua: #8ee2e5;
+  --aqua-deep: #42aeb8;
+  --pink: #ef8db2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(142, 226, 229, 0.24), transparent 25%),
+    radial-gradient(circle at 82% 70%, rgba(239, 141, 178, 0.17), transparent 22%),
+    var(--paper);
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  position: fixed;
+  inset: 0;
+}
+
+button {
+  font: inherit;
+}
+
+.world-shell {
+  width: 100%;
+  height: 100svh;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(10px, 2.2svh, 24px);
+  overflow: hidden;
+  user-select: none;
+}
+
+.hero {
+  width: min(1040px, 100%);
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  gap: clamp(6px, 1.15svh, 12px);
+  overflow: hidden;
+}
+
+.topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--aqua-deep);
+  font-size: 0.82rem;
+  font-weight: 850;
+  letter-spacing: 0;
+}
+
+h1 {
+  margin: 0;
+  max-width: 480px;
+  font-size: clamp(1.85rem, 4.8vw, 3.65rem);
+  line-height: 0.96;
+  letter-spacing: 0;
+}
+
+.icon-button,
+.modal-close {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(20, 32, 30, 0.06);
+}
+
+.stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  min-height: 0;
+  overflow: visible;
+}
+
+.jelly-hitbox {
+  position: relative;
+  width: min(72vw, 610px);
+  max-width: calc(100svw - 36px);
+  aspect-ratio: 1.16 / 1;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.jelly-hitbox-image {
+  width: min(66vw, 54svh, 560px);
+  aspect-ratio: 1 / 1;
+}
+
+.jelly-hitbox:active {
+  cursor: grabbing;
+}
+
+.jelly-hitbox:focus-visible {
+  outline: 3px solid rgba(66, 174, 184, 0.45);
+  outline-offset: 8px;
+  border-radius: 28px;
+}
+
+.jelly-creature {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 32px 30px rgba(26, 124, 148, 0.12));
+}
+
+.jelly-image-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  transform-origin: 50% 78%;
+}
+
+.jelly-mesh-canvas {
+  position: absolute;
+  inset: -6%;
+  width: 112%;
+  height: 112%;
+  display: block;
+  filter: drop-shadow(0 28px 34px rgba(24, 139, 166, 0.14));
+  pointer-events: none;
+}
+
+.jelly-hitbox-image.is-pressing .jelly-mesh-canvas {
+  filter: drop-shadow(0 24px 28px rgba(24, 139, 166, 0.16)) saturate(1.04);
+}
+
+.jelly-reference-image {
+  width: 112%;
+  max-width: none;
+  height: auto;
+  display: block;
+  transform-origin: 50% 78%;
+  user-select: none;
+  pointer-events: none;
+  filter: drop-shadow(0 28px 34px rgba(24, 139, 166, 0.14));
+}
+
+.jelly-character {
+  overflow: visible;
+}
+
+.jelly-character-shadow {
+  position: absolute;
+  left: 16%;
+  right: 16%;
+  bottom: 10%;
+  height: 10%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(30, 126, 148, 0.18), rgba(30, 126, 148, 0.06) 52%, transparent 74%);
+  transform-origin: 50% 50%;
+  pointer-events: none;
+}
+
+.jelly-character-body {
+  position: absolute;
+  inset: -2%;
+  display: grid;
+  place-items: center;
+  transform-origin: 50% 78%;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.jelly-character-image {
+  width: 104%;
+  max-width: none;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 28px 34px rgba(24, 139, 166, 0.14));
+  user-select: none;
+}
+
+.jelly-character-highlight {
+  position: absolute;
+  left: 21%;
+  top: 18%;
+  width: 26%;
+  height: 8%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.78);
+  filter: blur(8px);
+  transform: rotate(-28deg);
+  mix-blend-mode: screen;
+  opacity: 0.58;
+}
+
+.jelly-character-dent {
+  position: absolute;
+  width: 15%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 48% 46%, rgba(18, 125, 151, 0.24), rgba(94, 217, 238, 0.12) 42%, rgba(255, 255, 255, 0) 72%);
+  filter: blur(7px);
+  mix-blend-mode: multiply;
+  transform: translate(-50%, -50%);
+}
+
+.jelly-squish-ring {
+  position: absolute;
+  width: 22%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.62);
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.12), rgba(62, 203, 231, 0.16) 48%, rgba(62, 203, 231, 0) 72%);
+  box-shadow:
+    inset 0 0 14px rgba(255, 255, 255, 0.36),
+    0 0 18px rgba(51, 204, 231, 0.18);
+  filter: blur(0.5px);
+  transform: translate(-50%, -50%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.jelly-character[data-pressed="true"] .jelly-character-image {
+  filter: drop-shadow(0 22px 28px rgba(24, 139, 166, 0.18)) saturate(1.06) brightness(1.02);
+}
+
+.jelly-face-veil {
+  position: absolute;
+  left: 26%;
+  top: 42%;
+  width: 48%;
+  height: 26%;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 24% 53%, rgb(91, 220, 238) 0 23%, rgba(93, 221, 239, 0.84) 33%, rgba(93, 221, 239, 0) 50%),
+    radial-gradient(circle at 76% 53%, rgb(91, 220, 238) 0 23%, rgba(93, 221, 239, 0.84) 33%, rgba(93, 221, 239, 0) 50%),
+    radial-gradient(ellipse at 50% 53%, rgba(109, 226, 239, 1) 0 58%, rgba(91, 216, 236, 0.96) 72%, rgba(91, 216, 236, 0) 100%),
+    linear-gradient(90deg, rgba(72, 207, 232, 0) 0%, rgba(102, 224, 240, 0.92) 24%, rgba(126, 233, 242, 0.94) 50%, rgba(102, 224, 240, 0.92) 76%, rgba(72, 207, 232, 0) 100%);
+  filter: blur(15px);
+  opacity: 0;
+}
+
+.jelly-expression-motion {
+  position: absolute;
+  left: 47.2%;
+  top: 31.2%;
+  width: 94%;
+  height: 54.5%;
+  overflow: visible;
+  transform-origin: 50% 58%;
+  translate: -50% 0;
+  filter: drop-shadow(0 1.5px 1px rgba(4, 18, 44, 0.1));
+}
+
+.jelly-expression {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.jelly-face-asset {
+  filter: drop-shadow(0 1.4px 1px rgba(3, 16, 44, 0.08));
+}
+
+.jelly-face-eye,
+.jelly-face-eye-fill {
+  fill: url("#jellyEyeGloss");
+}
+
+.jelly-face-eye-rim {
+  fill: #061045;
+  filter: drop-shadow(0 1.2px 0 rgba(91, 196, 255, 0.32));
+}
+
+.jelly-face-mouth-fill {
+  fill: url("#jellyMouthGloss");
+}
+
+.jelly-face-eye-depth {
+  fill: url("#jellyEyeDepth");
+  mix-blend-mode: screen;
+}
+
+.jelly-face-shine,
+.jelly-face-eye-gloss,
+.jelly-face-eye-spark {
+  fill: rgba(255, 255, 255, 0.96);
+}
+
+.jelly-face-line {
+  fill: none;
+  stroke: #061045;
+  stroke-width: 2.35;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 1px 0 rgba(78, 180, 255, 0.24));
+}
+
+.jelly-face-brow {
+  stroke-width: 2.55;
+}
+
+.jelly-face-thick {
+  stroke-width: 3.1;
+}
+
+.jelly-face-spiral {
+  stroke-width: 2.5;
+}
+
+.jelly-face-soft-line {
+  stroke-width: 2.15;
+}
+
+.jelly-face-shine-line {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.72);
+  stroke-width: 0.95;
+  stroke-linecap: round;
+}
+
+.jelly-face-emote {
+  fill: none;
+  stroke: #238bd7;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.92;
+}
+
+.jelly-face-joy-lines {
+  stroke: #ffca3f;
+}
+
+.jelly-face-heart-mark,
+.jelly-face-blush-hearts {
+  fill: #ff6da2;
+  stroke: #ff6da2;
+  stroke-width: 1.2;
+}
+
+.jelly-face-puff-mark {
+  stroke: #78a4bf;
+  stroke-width: 2;
+}
+
+.jelly-face-dizzy-marks {
+  stroke: #8a92df;
+  stroke-width: 2.2;
+}
+
+.jelly-face-z-mark {
+  stroke: #258bd7;
+  stroke-width: 2.7;
+}
+
+.jelly-face-star-mark {
+  fill: #ffc83d;
+  stroke: #f2b823;
+  stroke-width: 1.2;
+}
+
+.jelly-face-knot-mouth {
+  stroke-width: 2.25;
+}
+
+.jelly-face-blush-stripes {
+  fill: none;
+  stroke: #ff679d;
+  stroke-width: 1.55;
+  stroke-linecap: round;
+  opacity: 0.86;
+}
+
+.jelly-face-cheek {
+  fill: rgba(255, 111, 172, 0.82);
+  filter: url("#jellyCheekGlow");
+}
+
+.jelly-face-cheek-shine {
+  fill: rgba(255, 255, 255, 0.72);
+  filter: blur(0.35px);
+}
+
+.jelly-character[data-reaction="blush"] .jelly-face-cheek {
+  fill: rgba(255, 102, 171, 0.94);
+}
+
+.jelly-face-tongue {
+  fill: url("#jellyTongueGloss");
+}
+
+.jelly-face-small-mouth {
+  opacity: 0.95;
+}
+
+.jelly-character[data-reaction="annoyed"] .jelly-face-cheek {
+  fill: rgba(247, 151, 186, 0.58);
+}
+
+.jelly-character[data-reaction="sleepy"] .jelly-character-body {
+  animation: jelly-sleep-breathe 4.8s ease-in-out infinite;
+}
+
+.jelly-character[data-reaction="default"] .jelly-character-body {
+  animation: jelly-idle-breathe 5.8s ease-in-out infinite;
+}
+
+.jelly-character[data-reaction="curious"] .jelly-character-body {
+  animation: jelly-curious-tilt 1.8s ease-in-out infinite;
+}
+
+.jelly-reaction-particle {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: #32adbd;
+  font-weight: 900;
+  pointer-events: none;
+}
+
+.jelly-reaction-particle.is-bubble {
+  border: 1.4px solid rgba(255, 255, 255, 0.82);
+  background: rgba(142, 226, 229, 0.26);
+  box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+.jelly-reaction-particle.is-sparkle,
+.jelly-reaction-particle.is-star {
+  color: #f4b7ca;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
+}
+
+.jelly-reaction-particle.is-z {
+  color: #42aeb8;
+  font-size: 1.05rem;
+}
+
+@keyframes jelly-idle-breathe {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  48% {
+    transform: translateY(2px) scale(1.006, 0.996);
+  }
+}
+
+@keyframes jelly-sleep-breathe {
+  0%,
+  100% {
+    transform: translateY(4px) scale(1.025, 0.986);
+  }
+  50% {
+    transform: translateY(8px) scale(1.04, 0.976);
+  }
+}
+
+@keyframes jelly-curious-tilt {
+  0%,
+  100% {
+    transform: rotate(-0.4deg);
+  }
+  50% {
+    transform: rotate(0.8deg) translateY(-2px);
+  }
+}
+
+.jelly-image-dent {
+  position: absolute;
+  width: 19%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 45% 45%, rgba(0, 121, 153, 0.26), rgba(77, 209, 237, 0.12) 38%, rgba(255, 255, 255, 0) 70%);
+  mix-blend-mode: multiply;
+  filter: blur(6px);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.jelly-png-particle {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  background: rgba(137, 230, 245, 0.32);
+  box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.82);
+  pointer-events: none;
+}
+
+.jelly-contact {
+  fill: rgba(23, 98, 118, 0.14);
+  filter: blur(4px);
+}
+
+.jelly-base-plate {
+  fill: rgba(100, 218, 239, 0.24);
+  stroke: rgba(54, 181, 208, 0.42);
+  stroke-width: 0.8;
+  filter: blur(0.2px);
+}
+
+.jelly-base-glint {
+  fill: rgba(255, 255, 255, 0.36);
+  filter: blur(1.4px);
+}
+
+.jelly-silhouette {
+  fill: rgba(44, 166, 197, 0.24);
+  transform: translate(0, 2px);
+}
+
+.jelly-skin {
+  fill: url("#jellySkin");
+  stroke: rgba(42, 164, 195, 0.46);
+  stroke-width: 1;
+}
+
+.jelly-inner {
+  fill: url("#jellyInner");
+  mix-blend-mode: multiply;
+}
+
+.jelly-base-depth {
+  fill: url("#jellyBaseGlow");
+  opacity: 0.88;
+  filter: blur(0.4px);
+}
+
+.jelly-bottom-milk {
+  fill: rgba(237, 255, 255, 0.3);
+  filter: blur(2.4px);
+}
+
+.jelly-tiny-shine {
+  fill: rgba(255, 255, 255, 0.78);
+  filter: blur(0.5px);
+}
+
+.jelly-side-shine {
+  fill: rgba(255, 255, 255, 0.22);
+  filter: blur(1.1px);
+}
+
+.jelly-top-shine {
+  fill: rgba(255, 255, 255, 0.68);
+  filter: blur(0.8px);
+}
+
+.jelly-rim-shine,
+.jelly-left-rim,
+.jelly-right-rim {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.38);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  filter: blur(0.5px);
+}
+
+.jelly-left-rim,
+.jelly-right-rim {
+  stroke: rgba(255, 255, 255, 0.28);
+  stroke-width: 2;
+}
+
+.jelly-bubbles circle {
+  fill: rgba(255, 255, 255, 0.12);
+  stroke: rgba(255, 255, 255, 0.58);
+  stroke-width: 0.7;
+}
+
+.jelly-dimple {
+  fill: rgba(24, 152, 184, 0.18);
+  opacity: 0.72;
+  filter: blur(3.4px);
+  mix-blend-mode: multiply;
+}
+
+.jelly-face-v3 {
+  fill: #142c2b;
+  stroke: #142c2b;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.jelly-eye {
+  fill: #142c2b;
+  stroke: none;
+}
+
+.jelly-eye-shine {
+  fill: rgba(255, 255, 255, 0.96);
+  stroke: none;
+}
+
+.jelly-eye-glint {
+  fill: rgba(255, 255, 255, 0.9);
+  stroke: none;
+}
+
+.jelly-eye-line,
+.jelly-mouth {
+  fill: none;
+}
+
+.jelly-mouth-fill {
+  fill: #142c2b;
+  stroke: none;
+}
+
+.jelly-cheek-fill {
+  fill: rgba(255, 148, 178, 0.54);
+  stroke: none;
+}
+
+.jelly-splash {
+  fill: rgba(155, 232, 225, 0.8);
+  stroke: rgba(255, 255, 255, 0.72);
+  stroke-width: 1.5;
+}
+
+.jelly-star {
+  fill: rgba(255, 205, 112, 0.9);
+  stroke: rgba(255, 255, 255, 0.82);
+  stroke-width: 1;
+}
+
+.poke-hint {
+  margin: clamp(2px, 0.8svh, 10px) 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.status-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.stat-block {
+  min-height: clamp(64px, 10svh, 96px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.stat-block span,
+.stat-block small {
+  color: var(--muted);
+  font-size: clamp(0.62rem, 1.45svh, 0.76rem);
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.stat-block strong {
+  font-size: clamp(1.35rem, 4.2svh, 3rem);
+  line-height: 1;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  color: var(--muted);
+  min-height: 44px;
+}
+
+.actions p {
+  margin: 0;
+  font-weight: 700;
+  font-size: clamp(0.8rem, 1.7svh, 1rem);
+}
+
+.give-button {
+  min-height: clamp(38px, 5.4svh, 44px);
+  border: 0;
+  border-radius: 8px;
+  padding: 0 18px;
+  background: #47c7d6;
+  color: white;
+  font-weight: 850;
+  cursor: pointer;
+  box-shadow: 0 12px 28px rgba(36, 169, 190, 0.26);
+}
+
+.icon-button:hover,
+.modal-close:hover,
+.give-button:hover {
+  transform: translateY(-1px);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(20, 24, 23, 0.22);
+  backdrop-filter: blur(8px);
+  z-index: 10;
+}
+
+.modal-panel {
+  position: relative;
+  width: min(360px, 100%);
+  border-radius: 8px;
+  padding: 28px;
+  background: #fffdfa;
+  box-shadow: 0 24px 80px rgba(19, 28, 27, 0.22);
+}
+
+.modal-panel h2 {
+  margin: 0 44px 8px 0;
+  font-size: 1.6rem;
+}
+
+.modal-panel p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  box-shadow: none;
+}
+
+.jelly-3d-shell {
+  min-height: 100svh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(142, 226, 229, 0.22), transparent 25%),
+    radial-gradient(circle at 82% 74%, rgba(239, 141, 178, 0.14), transparent 22%),
+    var(--paper);
+  overflow: hidden;
+}
+
+.jelly-3d-topbar {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: start;
+  gap: 16px;
+  padding: 24px clamp(18px, 4vw, 48px) 0;
+}
+
+.jelly-3d-helper {
+  margin: -4px 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 760;
+}
+
+.jelly-3d-tabs,
+.jelly-3d-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.jelly-3d-tabs {
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.jelly-3d-tabs a {
+  min-height: 34px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 6px;
+  padding: 0 12px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.jelly-3d-tabs a.is-active {
+  background: #47c7d6;
+  color: #fff;
+}
+
+.jelly-3d-stage {
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  padding: 0 clamp(8px, 3vw, 32px) 24px;
+}
+
+.jelly-3d-canvas {
+  width: min(1120px, 100%);
+  height: min(760px, calc(100svh - 108px));
+  min-height: 520px;
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+}
+
+.jelly-3d-canvas:active {
+  cursor: grabbing;
+}
+
+.jelly-3d-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 680px) {
+  .world-shell {
+    padding: clamp(8px, 2svh, 18px);
+  }
+
+  .hero {
+    height: 100%;
+    min-height: 0;
+    gap: clamp(5px, 1svh, 10px);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+  }
+
+  .stage {
+    min-height: 0;
+  }
+
+  .jelly-hitbox {
+    width: min(94vw, 52svh, 470px);
+  }
+
+  .jelly-hitbox-image {
+    width: min(102vw, 54svh, 560px);
+  }
+
+  .status-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .stat-block {
+    min-height: clamp(52px, 8.4svh, 76px);
+  }
+
+  .actions {
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .actions p {
+    display: none;
+  }
+
+  .give-button {
+    width: min(100%, 240px);
+    margin-inline: auto;
+  }
+
+  .jelly-3d-topbar {
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    padding-top: 18px;
+  }
+
+  .jelly-3d-tabs {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .jelly-3d-controls {
+    align-self: start;
+  }
+
+  .jelly-3d-stage {
+    padding-bottom: 12px;
+  }
+
+  .jelly-3d-canvas {
+    width: calc(100svw - 18px);
+    height: min(620px, calc(100svh - 142px));
+    min-height: 480px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+}
