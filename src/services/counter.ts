@@ -1,25 +1,38 @@
 export interface PokeCounterService {
-  getCount(): Promise<number>;
-  increment(delta: number): Promise<number>;
+  getStats(): Promise<PokeStats>;
+  increment(delta: number): Promise<PokeStats>;
 }
 
 type CounterSyncOptions = {
-  onSynced?: (total: number) => void;
+  onSynced?: (stats: PokeStats) => void;
   onError?: (error: unknown, delta: number) => void;
 };
 
-type PokeStatsResponse = {
+export type PokeStats = {
   totalPokes: number;
+  fortuneBaht: number;
+  updatedAt: string;
 };
 
 async function readPokeResponse(response: Response) {
-  const data = await response.json() as Partial<PokeStatsResponse> & { error?: string };
+  const data = await response.json() as Partial<PokeStats> & { error?: string };
 
-  if (!response.ok || typeof data.totalPokes !== "number" || !Number.isFinite(data.totalPokes)) {
+  if (
+    !response.ok ||
+    typeof data.totalPokes !== "number" ||
+    !Number.isFinite(data.totalPokes) ||
+    typeof data.fortuneBaht !== "number" ||
+    !Number.isFinite(data.fortuneBaht) ||
+    typeof data.updatedAt !== "string"
+  ) {
     throw new Error(data.error ?? "Invalid poke stats response.");
   }
 
-  return data.totalPokes;
+  return {
+    totalPokes: data.totalPokes,
+    fortuneBaht: data.fortuneBaht,
+    updatedAt: data.updatedAt
+  };
 }
 
 function sendBeaconDelta(delta: number) {
@@ -32,7 +45,7 @@ function sendBeaconDelta(delta: number) {
 }
 
 class ApiPokeCounterService implements PokeCounterService {
-  async getCount() {
+  async getStats() {
     return readPokeResponse(await fetch("/api/pokes", { cache: "no-store" }));
   }
 

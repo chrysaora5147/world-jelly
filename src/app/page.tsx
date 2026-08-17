@@ -4,35 +4,40 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import { GiveModal } from "@/components/GiveModal";
 import { WorldJelly } from "@/components/WorldJelly";
-import { createBatchedCounterSync, pokeCounterService } from "@/services/counter";
+import { createBatchedCounterSync, pokeCounterService, type PokeStats } from "@/services/counter";
 import { createGameplayAnalytics } from "@/services/gameplay-analytics";
 import { JellyAudio, type JellySoundCue } from "@/services/audio";
-import { formatFortune, getJellyFortune } from "@/services/fortune";
+import { formatFortune } from "@/services/fortune";
 import type { PokeIntensity } from "@/types/jelly";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
 
 export default function Home() {
-  const [globalPokes, setGlobalPokes] = useState(3829417);
+  const [jellyStats, setJellyStats] = useState<PokeStats | null>(null);
   const [sessionPokes, setSessionPokes] = useState(0);
   const [muted, setMuted] = useState(false);
   const [isGiveOpen, setGiveOpen] = useState(false);
   const audio = useRef<JellyAudio | null>(null);
   const counterSync = useRef<ReturnType<typeof createBatchedCounterSync> | null>(null);
   const gameplayAnalytics = useRef<ReturnType<typeof createGameplayAnalytics> | null>(null);
-  const fortune = getJellyFortune();
 
   useEffect(() => {
     audio.current = new JellyAudio();
     gameplayAnalytics.current = createGameplayAnalytics(false);
     counterSync.current = createBatchedCounterSync(pokeCounterService, {
-      onSynced(total) {
-        setGlobalPokes((current) => Math.max(current, total));
+      onSynced(stats) {
+        setJellyStats((current) => ({
+          ...stats,
+          totalPokes: Math.max(current?.totalPokes ?? 0, stats.totalPokes)
+        }));
       }
     });
 
-    void pokeCounterService.getCount().then((total) => {
-      setGlobalPokes((current) => Math.max(current, total));
+    void pokeCounterService.getStats().then((stats) => {
+      setJellyStats((current) => ({
+        ...stats,
+        totalPokes: Math.max(current?.totalPokes ?? 0, stats.totalPokes)
+      }));
     }).catch(() => {
       // Keep the jelly playable if the production counter is temporarily unavailable.
     });
@@ -76,7 +81,7 @@ export default function Home() {
   }, [sessionPokes]);
 
   const handlePoke = (intensity: PokeIntensity, cue: JellySoundCue) => {
-    setGlobalPokes((count) => count + 1);
+    setJellyStats((stats) => stats ? { ...stats, totalPokes: stats.totalPokes + 1 } : stats);
     setSessionPokes((count) => count + 1);
     gameplayAnalytics.current?.recordPoke();
     counterSync.current?.queueIncrement();
@@ -120,12 +125,12 @@ export default function Home() {
         <div className="status-row" aria-live="polite">
           <div className="stat-block">
             <span>GLOBAL POKES</span>
-            <strong>{numberFormatter.format(globalPokes)}</strong>
+            <strong>{jellyStats ? numberFormatter.format(jellyStats.totalPokes) : "syncing"}</strong>
           </div>
           <div className="stat-block">
             <span>JELLY&apos;S FORTUNE</span>
-            <strong>{formatFortune(fortune.amount, fortune.currency)}</strong>
-            <small>{fortune.note}</small>
+            <strong>{jellyStats ? formatFortune(jellyStats.fortuneBaht, "THB") : "syncing"}</strong>
+            <small>{jellyStats ? "Live from Supabase" : "Connecting"}</small>
           </div>
         </div>
 
