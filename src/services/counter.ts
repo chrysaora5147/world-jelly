@@ -3,73 +3,128 @@ export interface PokeCounterService {
   increment(delta: number): Promise<number>;
 }
 
-const STORAGE_KEY = "world-jelly:pokes:v0";
-const MOCK_BASE_COUNT = 3829417;
+type CounterSyncOptions = {
+  onSynced?: (total: number) => void;
+  onError?: (error: unknown, delta: number) => void;
+};
 
-function readLocalCount() {
-  if (typeof window === "undefined") {
-    return MOCK_BASE_COUNT;
+type PokeStatsResponse = {
+  totalPokes: number;
+};
+
+async function readPokeResponse(response: Response) {
+  const data = await response.json() as Partial<PokeStatsResponse> & { error?: string };
+
+  if (!response.ok || typeof data.totalPokes !== "number" || !Number.isFinite(data.totalPokes)) {
+    throw new Error(data.error ?? "Invalid poke stats response.");
   }
 
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  const parsed = stored ? Number.parseInt(stored, 10) : Number.NaN;
-  return Number.isFinite(parsed) ? parsed : MOCK_BASE_COUNT;
+  return data.totalPokes;
 }
 
-function writeLocalCount(count: number) {
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(STORAGE_KEY, String(count));
+function sendBeaconDelta(delta: number) {
+  if (typeof navigator === "undefined" || !navigator.sendBeacon) {
+    return false;
   }
+
+  const payload = new Blob([JSON.stringify({ delta })], { type: "application/json" });
+  return navigator.sendBeacon("/api/pokes", payload);
 }
 
-class LocalPokeCounterService implements PokeCounterService {
+class ApiPokeCounterService implements PokeCounterService {
   async getCount() {
-    return readLocalCount();
+    return readPokeResponse(await fetch("/api/pokes", { cache: "no-store" }));
   }
 
   async increment(delta: number) {
-    const next = readLocalCount() + delta;
-    writeLocalCount(next);
-    return next;
+    return readPokeResponse(await fetch("/api/pokes", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({ delta }),
+      keepalive: delta <= 50
+    }));
   }
 }
 
-export const pokeCounterService: PokeCounterService = new LocalPokeCounterService();
+export const pokeCounterService: PokeCounterService = new ApiPokeCounterService();
 
-export function createBatchedCounterSync(service: PokeCounterService) {
+export function createBatchedCounterSync(service: PokeCounterService, options: CounterSyncOptions = {}) {
   let pending = 0;
   let timer: number | null = null;
+  let flushing = false;
 
   const flush = async () => {
-    if (pending === 0) {
+    if (pending === 0 || flushing) {
       return;
     }
 
     const delta = pending;
     pending = 0;
-    await service.increment(delta);
+    flushing = true;
+
+    try {
+      const total = await service.increment(delta);
+      options.onSynced?.(total);
+    } catch (error) {
+      pending += delta;
+      options.onError?.(error, delta);
+    } finally {
+      flushing = false;
+      if (pending > 0) {
+        scheduleFlush();
+      }
+    }
+  };
+
+  const scheduleFlush = () => {
+    if (timer) {
+      window.clearTimeout(timer);
+    }
+
+    timer = window.setTimeout(() => {
+      timer = null;
+      void flush();
+    }, 1000);
   };
 
   return {
     queueIncrement() {
       pending += 1;
 
-      if (timer) {
-        window.clearTimeout(timer);
+      if (pending >= 50) {
+        if (timer) {
+          window.clearTimeout(timer);
+          timer = null;
+        }
+        if (flushing) {
+          scheduleFlush();
+        } else {
+          void flush();
+        }
+        return;
       }
 
-      timer = window.setTimeout(() => {
-        timer = null;
-        void flush();
-      }, 700);
+      scheduleFlush();
     },
     flush,
+    flushWithBeacon() {
+      if (pending === 0) {
+        return;
+      }
+
+      const delta = pending;
+      pending = 0;
+      if (!sendBeaconDelta(delta)) {
+        pending = delta;
+      }
+    },
     dispose() {
       if (timer) {
         window.clearTimeout(timer);
       }
       timer = null;
-      pending = 0;
     }
   };
 }
