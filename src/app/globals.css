@@ -859,41 +859,135 @@ h1 {
 }
 
 @media (max-width: 680px) {
+  body {
+    background:
+      radial-gradient(circle at 24% 12%, rgba(142, 226, 229, 0.18), transparent 24%),
+      radial-gradient(circle at 78% 82%, rgba(239, 141, 178, 0.12), transparent 22%),
+      var(--paper);
+  }
+
   .world-shell {
-    padding: clamp(8px, 2svh, 18px);
+    padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
   }
 
   .hero {
     height: 100%;
     min-height: 0;
-    gap: clamp(5px, 1svh, 10px);
+    gap: clamp(8px, 1.35svh, 13px);
     grid-template-rows: auto minmax(0, 1fr) auto auto;
+    align-content: stretch;
+  }
+
+  .topbar {
+    align-items: center;
+    gap: 12px;
+  }
+
+  .eyebrow {
+    margin: 0;
+    font-size: clamp(1rem, 4.4vw, 1.3rem);
+    line-height: 1;
+    color: #1ea6ba;
+  }
+
+  .icon-button,
+  .modal-close {
+    width: 40px;
+    height: 40px;
+    box-shadow: 0 6px 16px rgba(20, 32, 30, 0.055);
   }
 
   .stage {
     min-height: 0;
+    align-content: center;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: clamp(2px, 0.6svh, 6px);
   }
 
   .jelly-hitbox {
-    width: min(94vw, 52svh, 470px);
+    width: min(91vw, 47svh, 430px);
   }
 
   .jelly-hitbox-image {
-    width: min(102vw, 54svh, 560px);
+    width: min(94vw, 49svh, 440px);
+  }
+
+  .jelly-creature,
+  .jelly-character-image {
+    filter: drop-shadow(0 16px 18px rgba(24, 139, 166, 0.1));
+  }
+
+  .jelly-character-highlight {
+    filter: blur(5px);
+    opacity: 0.44;
+  }
+
+  .jelly-character-dent {
+    filter: blur(4px);
+    opacity: 0.42;
+  }
+
+  .jelly-squish-ring {
+    box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.25);
+    filter: none;
+  }
+
+  .jelly-expression-motion {
+    filter: none;
+  }
+
+  .jelly-face-asset {
+    filter: none;
+  }
+
+  .jelly-character-shadow {
+    bottom: 11%;
+    height: 8%;
+    background: radial-gradient(ellipse at center, rgba(30, 126, 148, 0.13), rgba(30, 126, 148, 0.04) 56%, transparent 76%);
+  }
+
+  .jelly-reaction-particle {
+    width: 14px;
+    height: 14px;
+  }
+
+  .poke-hint {
+    margin: 0;
+    color: #35aebf;
+    font-size: clamp(0.78rem, 3.3vw, 0.92rem);
+    line-height: 1;
+    text-align: center;
   }
 
   .status-row {
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 9px;
   }
 
   .stat-block {
-    min-height: clamp(52px, 8.4svh, 76px);
+    min-height: clamp(58px, 9.5svh, 82px);
+    padding: 8px 10px;
+    border: 1px solid rgba(220, 227, 223, 0.9);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.54);
+    justify-content: center;
+  }
+
+  .stat-block span,
+  .stat-block small {
+    font-size: clamp(0.56rem, 2.3vw, 0.68rem);
+    line-height: 1.15;
+  }
+
+  .stat-block strong {
+    font-size: clamp(1.18rem, 7vw, 1.74rem);
+    line-height: 0.96;
   }
 
   .actions {
     align-items: center;
     flex-direction: row;
+    min-height: 44px;
   }
 
   .actions p {
@@ -901,8 +995,16 @@ h1 {
   }
 
   .give-button {
-    width: min(100%, 240px);
+    width: min(100%, 260px);
     margin-inline: auto;
+    min-height: 44px;
+    box-shadow: 0 9px 18px rgba(36, 169, 190, 0.2);
+  }
+
+  .icon-button:hover,
+  .modal-close:hover,
+  .give-button:hover {
+    transform: none;
   }
 
   .jelly-3d-topbar {
@@ -928,6 +1030,40 @@ h1 {
     width: calc(100svw - 18px);
     height: min(620px, calc(100svh - 142px));
     min-height: 480px;
+  }
+}
+
+@media (max-width: 380px), (max-height: 700px) {
+  .world-shell {
+    padding-block: max(8px, env(safe-area-inset-top)) max(9px, env(safe-area-inset-bottom));
+  }
+
+  .hero {
+    gap: 7px;
+  }
+
+  .jelly-hitbox,
+  .jelly-hitbox-image {
+    width: min(89vw, 43svh, 380px);
+  }
+
+  .stat-block {
+    min-height: 54px;
+    padding: 6px 8px;
+  }
+
+  .give-button {
+    min-height: 40px;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .jelly-character[data-reaction="default"] .jelly-character-body {
+    animation-duration: 7.2s;
+  }
+
+  .jelly-character[data-reaction="sleepy"] .jelly-character-body {
+    animation-duration: 6.2s;
   }
 }
 

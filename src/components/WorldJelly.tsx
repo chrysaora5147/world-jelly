@@ -544,6 +544,7 @@ export function WorldJelly({ sessionPokes, onPoke, onRelease, onPrimeSound, onSo
   const [animationFlow, setAnimationFlow] = useState<AnimationFlow>("idle");
   const [sequence, setSequence] = useState(0);
   const [particles, setParticles] = useState<Particle[]>([]);
+  const [isTouchLike, setTouchLike] = useState(false);
 
   const clearHoldTimers = useCallback(() => {
     if (holdTimer.current) {
@@ -622,6 +623,15 @@ export function WorldJelly({ sessionPokes, onPoke, onRelease, onPrimeSound, onSo
     return () => window.removeEventListener("world-jelly:set-reaction", handler);
   }, [setReactionSafely]);
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(hover: none), (pointer: coarse), (max-width: 680px)");
+    const update = () => setTouchLike(mediaQuery.matches);
+
+    update();
+    mediaQuery.addEventListener("change", update);
+    return () => mediaQuery.removeEventListener("change", update);
+  }, []);
+
   const localFromPointer = (clientX: number, clientY: number) => {
     const rect = shellRef.current?.getBoundingClientRect();
     if (!rect) {
@@ -639,18 +649,19 @@ export function WorldJelly({ sessionPokes, onPoke, onRelease, onPrimeSound, onSo
       if (shouldReduceMotion) {
         return;
       }
+      const particleCount = isTouchLike ? Math.min(count, 2) : count;
       setParticles((items) => [
-        ...items.slice(-16),
-        ...Array.from({ length: count }, (_, index) => ({
+        ...items.slice(isTouchLike ? -6 : -16),
+        ...Array.from({ length: particleCount }, (_, index) => ({
           id: particleId.current++,
-          x: point.x + (Math.random() - 0.5) * 10,
-          y: point.y + (Math.random() - 0.5) * 8,
+          x: point.x + (Math.random() - 0.5) * (isTouchLike ? 6 : 10),
+          y: point.y + (Math.random() - 0.5) * (isTouchLike ? 5 : 8),
           kind,
-          angle: Math.PI * 2 * ((index + Math.random()) / Math.max(count, 1))
+          angle: Math.PI * 2 * ((index + Math.random()) / Math.max(particleCount, 1))
         }))
       ]);
     },
-    [shouldReduceMotion]
+    [isTouchLike, shouldReduceMotion]
   );
 
   const pickReaction = (point: LocalPoint, recentCount: number, nextDirection: Direction) => {
@@ -758,6 +769,10 @@ export function WorldJelly({ sessionPokes, onPoke, onRelease, onPrimeSound, onSo
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (isTouchLike && !isPressed) {
+      return;
+    }
+
     const point = localFromPointer(event.clientX, event.clientY);
 
     if (!isPressed && reaction !== "sleepy" && reactionPriority[reaction] <= reactionPriority.curious) {
@@ -795,9 +810,46 @@ export function WorldJelly({ sessionPokes, onPoke, onRelease, onPrimeSound, onSo
     const down = direction === "top" || reaction === "squished";
     const up = direction === "bottom";
     const short = shouldReduceMotion;
+    const soft = isTouchLike;
 
     if (short) {
       return { scaleX: 1, scaleY: 1, x: 0, y: 0, rotate: 0 };
+    }
+    if (soft && animationFlow === "press" && isPressed) {
+      return {
+        scaleX: [1, 1.035, 1.075],
+        scaleY: [1, 0.955, 0.89],
+        y: [0, 6, 12],
+        x: [0, side * 2, side * 4],
+        rotate: [0, side * 0.25, side * 0.45]
+      };
+    }
+    if (soft && animationFlow === "poke" && isPressed) {
+      return {
+        scaleX: [1, 1.055, 0.982, 1.024, 1],
+        scaleY: [1, 0.925, 1.055, 0.985, 1],
+        x: [0, side * 5, side * -2, side, 0],
+        y: [0, 8, -8, 3, 0],
+        rotate: [0, side * 0.5, side * -0.7, side * 0.25, 0]
+      };
+    }
+    if (soft && animationFlow === "release") {
+      return {
+        scaleX: [1, 0.972, 1.064, 0.99, 1],
+        scaleY: [1, 1.058, 0.918, 1.028, 1],
+        x: [0, side * -3, side * 2, 0],
+        y: [0, -10, 5, 0],
+        rotate: [0, side * -0.65, side * 0.42, 0]
+      };
+    }
+    if (soft && (animationFlow === "spam" || reaction === "dizzy" || reaction === "annoyed")) {
+      return {
+        scaleX: [1, 1.018, 0.99, 1.016, 1],
+        scaleY: [1, 0.982, 1.018, 0.99, 1],
+        x: [0, -4, 5, -2, 0],
+        y: [0, 2, -2, 1, 0],
+        rotate: [0, -0.8, 0.9, -0.35, 0]
+      };
     }
     if (animationFlow === "wake") {
       return {
@@ -869,13 +921,25 @@ export function WorldJelly({ sessionPokes, onPoke, onRelease, onPrimeSound, onSo
     }
 
     return {
-      scaleX: down ? [1, 1.08, 0.985, 1.035, 1] : up ? [1, 0.965, 1.035, 1] : [1, 1.045, 0.988, 1.018, 1],
-      scaleY: down ? [1, 0.89, 1.055, 0.985, 1] : up ? [1, 1.06, 0.955, 1] : [1, 0.94, 1.04, 0.992, 1],
-      x: [0, side * 13, side * -6, side * 2, 0],
-      y: down ? [0, 12, -7, 2, 0] : up ? [0, -11, 5, 0] : [0, 8, -5, 1, 0],
-      rotate: [0, side * 1.6, side * -0.9, 0]
+      scaleX: down
+        ? soft ? [1, 1.035, 0.994, 1] : [1, 1.08, 0.985, 1.035, 1]
+        : up
+          ? soft ? [1, 0.986, 1.018, 1] : [1, 0.965, 1.035, 1]
+          : soft ? [1, 1.018, 0.995, 1] : [1, 1.045, 0.988, 1.018, 1],
+      scaleY: down
+        ? soft ? [1, 0.955, 1.018, 1] : [1, 0.89, 1.055, 0.985, 1]
+        : up
+          ? soft ? [1, 1.022, 0.99, 1] : [1, 1.06, 0.955, 1]
+          : soft ? [1, 0.974, 1.015, 1] : [1, 0.94, 1.04, 0.992, 1],
+      x: soft ? [0, side * 5, side * -2, 0] : [0, side * 13, side * -6, side * 2, 0],
+      y: down
+        ? soft ? [0, 6, -3, 0] : [0, 12, -7, 2, 0]
+        : up
+          ? soft ? [0, -5, 2, 0] : [0, -11, 5, 0]
+          : soft ? [0, 4, -2, 0] : [0, 8, -5, 1, 0],
+      rotate: soft ? [0, side * 0.55, side * -0.25, 0] : [0, side * 1.6, side * -0.9, 0]
     };
-  }, [animationFlow, direction, isPressed, reaction, shouldReduceMotion]);
+  }, [animationFlow, direction, isPressed, isTouchLike, reaction, shouldReduceMotion]);
 
   const shadowAnimate = isPressed
     ? { scaleX: direction === "top" || reaction === "squished" ? 1.34 : 1.18, scaleY: 0.76, opacity: 0.24, x: 0 }
@@ -915,15 +979,25 @@ export function WorldJelly({ sessionPokes, onPoke, onRelease, onPrimeSound, onSo
         animate={bodyAnimate}
         transition={{
           duration:
-            animationFlow === "release"
-              ? 0.82
-              : animationFlow === "spam" || reaction === "annoyed" || reaction === "dizzy"
-                ? 1.08
-                : animationFlow === "press"
-                  ? 0.62
-                  : animationFlow === "poke"
-                    ? 0.42
-                    : 0.54,
+            isTouchLike
+              ? animationFlow === "release"
+                ? 0.5
+                : animationFlow === "spam" || reaction === "annoyed" || reaction === "dizzy"
+                  ? 0.64
+                  : animationFlow === "press"
+                    ? 0.34
+                    : animationFlow === "poke"
+                      ? 0.28
+                      : 0.38
+              : animationFlow === "release"
+                ? 0.82
+                : animationFlow === "spam" || reaction === "annoyed" || reaction === "dizzy"
+                  ? 1.08
+                  : animationFlow === "press"
+                    ? 0.62
+                    : animationFlow === "poke"
+                      ? 0.42
+                      : 0.54,
           ease: [0.16, 0.9, 0.18, 1]
         }}
       >
